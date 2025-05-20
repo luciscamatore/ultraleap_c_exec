@@ -2,13 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "LeapC.h"
 #include "ExampleConnection.h"
+
 
 #define DATA_PRINT_INTERVAL 30
 #define MAX_FINGER_ANGLE 110.0f // Approx max total angle when finger is fully closed
@@ -62,6 +58,7 @@ float calculate_finger_curl(LEAP_BONE *bones) {
 
   if (normalized < 0.0f) normalized = 0.0f;
   if (normalized > 1.0f) normalized = 1.0f;
+
   return normalized * 100.0f;  // Return curl as percentage
 }
 
@@ -113,44 +110,6 @@ int main(int argc, char **argv) {
 
   printf("Press Enter to exit program.\n");
   getchar();
-  
-  int pipefd[2];
-  pid_t pid;
-  char data[] = "nai tu treaba";
-
-  if(pipe(pipefd) == -1){
-    perror("pipe");
-    exit(EXIT_FAILURE);
-  }
-
-  pid = fork();
-  if(pid < 0){
-    perror("fork");
-    exit(EXIT_FAILURE);
-  }
-
-    if (pid == 0) {
-        // Child process: will execute Python and read from pipefd[0]
-        close(pipefd[1]);  // Close write end in child
-        // Duplicate read end to stdin (fd 0)
-        if (dup2(pipefd[0], STDIN_FILENO) == -1) {
-            perror("dup2");
-            exit(EXIT_FAILURE);
-        }
-        close(pipefd[0]);
-        // Execute python script
-        execlp("python3", "python3", "pipe_reader.py", NULL);
-        // If execlp failed
-        perror("execlp");
-        exit(EXIT_FAILURE);
-    } else {
-        // Parent process: write data to pipe
-        close(pipefd[0]);  // Close read end in parent
-        write(pipefd[1], data, strlen(data));
-        close(pipefd[1]);  // Signal EOF to child
-        wait(NULL); // Wait for child to finish
-    }
-
 
   CloseConnection();
   DestroyConnection();
